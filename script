@@ -1,0 +1,31 @@
+arc=$(uname -a)
+pcpu=$(grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
+vcpu=$(grep "^processor" /proc/cpuinfo | wc -l)
+totalram=$(free -m | awk '$1 == "Mem:" {print $2}')
+usedram=$(free -m | awk '$1 == "Mem:" {print $3}')
+pram=$(free | awk '$1 == "Mem:" {printf("%.2f"), $3*100/$2}')
+totaldisk=$(df -BG | grep '^/dev/mapper' | awk '{sumt+=$2} END {print sumt}')
+useddisk=$(df -BM | grep '^/dev/mapper' | awk '{sumu+=$3} END {print sumu}')
+pdisk=$(df -Bm | grep '^/dev/mapper' | awk '{sum1+=$3} {sum2+=$2} END {printf("%d"), sum1*100/sum2}')
+cpul=$(top -bn1 | grep '^%Cpu' | cut -c 9- | xargs | awk '{printf("%.1f%%"), $1 + $3}')
+lastboot=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+lvm=$(lsblk | grep "lvm" | wc -l)
+lvmact=$(if [ $lvm = 0 ]; then echo no; else echo yes; fi)
+ctcp=$(cat /proc/net/sockstat | awk '$1 == "TCP:" {print $3}')
+ulog=$(users | wc -w)
+ip=$(hostname -I)
+mac=$(cat /sys/class/net/*/address | head -n1)
+cmds=$(grep COMMAND /var/log/sudo.log | wc -l)
+
+wall "	#Architecture: $arc
+	#CPU physical: $pcpu
+	#vCPU: $vcpu
+	#Memory Usage: $usedram/${totalram}MB ($pram%)
+	#Disk Usage: $useddisk/${totaldisk}Gn ($pdisk%)
+	#CPU load: $cpul
+	#Last boot: $lastboot
+	#LVM use: $lvmact
+	#Connexions TCP: $ctcp ESTABLISHED
+	#User log: $ulog
+	#Network: IP $ip ($mac)
+	#Sudo: $cmds cmd"
